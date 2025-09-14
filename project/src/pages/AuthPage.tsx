@@ -94,7 +94,11 @@ const AuthPage: React.FC = () => {
           </p>
         </div>
         
-        <form>
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          // Navigate to dashboard after successful "login"
+          navigate('/dashboard');
+        }}>
           <div className="mb-6">
             <label className="block text-sm font-medium text-white mb-2"
                    style={{ 

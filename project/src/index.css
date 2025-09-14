@@ -1,3 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Leaflet Map Marker Styles */
+.emergency-marker {
+  background-color: #dc2626;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.ambulance-marker {
+  background-color: #2563eb;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.hospital-marker {
+  background-color: #16a34a;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
+}
+
+/* Leaflet popup styling */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-tip {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* AIChat Always On Top */
+.aichat-button, .aichat-window {
+  z-index: 999999 !important;
+  position: fixed !important;
+}

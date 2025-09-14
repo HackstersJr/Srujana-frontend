@@ -14,7 +14,7 @@ interface Message {
 }
 
 export function AIChat() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false); // Changed to false so button shows by default
   const [isRecording, setIsRecording] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -22,6 +22,11 @@ export function AIChat() {
   const [currentTranscript, setCurrentTranscript] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
+
+  // Debug log to verify component is mounting
+  useEffect(() => {
+    console.log('AIChat component mounted successfully - isOpen:', isOpen);
+  }, []);
 
   // Initialize speech recognition on component mount
   useEffect(() => {
@@ -49,28 +54,52 @@ export function AIChat() {
     setInputValue("");
 
     try {
-      const agentType = 'langgraph';
+      console.log('📤 Sending request to webhook with query:', currentInput);
 
-      const response = await fetch('http://localhost:8000/query', {
+      const response = await fetch('https://n8n.pipfactor.com/webhook-test/hacksters', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           query: currentInput,
-          agent_type: agentType
+          timestamp: new Date().toISOString(),
+          sender: 'medical-ai-chat'
         }),
       });
 
+      console.log('📥 Response status:', response.status, response.statusText);
+
       if (!response.ok) {
-        throw new Error('Failed to get AI response');
+        console.error('❌ Request failed with status:', response.status);
+        throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log('✅ Request successful! Response data:', data);
       
+      // Extract the most relevant text part from the JSON response
+      let text = '';
+      if (typeof data === 'string') {
+        text = data;
+      } else if (data.output) {
+        // Handle the case where response is wrapped in "output" field
+        text = data.output;
+      } else if (data["task.summary"]) {
+        text = data["task.summary"];
+      } else if (data.reason) {
+        text = data.reason;
+      } else if (data.response) {
+        text = data.response;
+      } else if (data.message) {
+        text = data.message;
+      } else {
+        text = JSON.stringify(data);
+      }
+
       const aiResponse: Message = {
         id: messages.length + 2,
-        text: data.response || "I apologize, but I couldn't process your request at the moment. Please try again.",
+        text,
         sender: "ai",
         timestamp: new Date()
       };
@@ -78,15 +107,40 @@ export function AIChat() {
       setMessages(prev => [...prev, aiResponse]);
 
     } catch (error) {
-      console.error('Error calling AI API:', error);
-      
+      console.error('❌ N8N webhook failed, falling back to local API:', error);
+      // Fallback to local CareCloud AI Agent API
+      try {
+        console.log('📤 Sending request to local API fallback with query:', currentInput);
+        const fallbackResponse = await fetch('http://localhost:8000/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: currentInput, agent_type: 'langgraph' }),
+        });
+        console.log('📥 Fallback response status:', fallbackResponse.status, fallbackResponse.statusText);
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          const fallbackText = fallbackData.response || "I apologize, but I couldn't process your request at the moment. Please try again.";
+          const aiResponse: Message = {
+            id: messages.length + 2,
+            text: fallbackText,
+            sender: 'ai',
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, aiResponse]);
+          return;
+        } else {
+          console.error('❌ Fallback API failed with status:', fallbackResponse.status, fallbackResponse.statusText);
+        }
+      } catch (fallbackError) {
+        console.error('❌ Error sending request to fallback API:', fallbackError);
+      }
+      // Final fallback error message
       const errorMessage: Message = {
         id: messages.length + 2,
-        text: "I'm experiencing some technical difficulties. Please check your connection and try again.",
-        sender: "ai",
+        text: "I'm experiencing some technical difficulties. Please try again later.",
+        sender: 'ai',
         timestamp: new Date()
       };
-
       setMessages(prev => [...prev, errorMessage]);
     }
   };
@@ -130,13 +184,14 @@ export function AIChat() {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 md:bottom-8 md:right-8 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-xl z-50"
+        className="aichat-button fixed bottom-4 right-4 md:bottom-8 md:right-8 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-xl"
         size="icon"
         style={{
           background: 'rgba(0, 0, 0, 0.8)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)'
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          zIndex: 999999
         }}
       >
         <MessageCircle className="h-5 w-5 md:h-6 md:w-6 text-white" />
@@ -146,9 +201,9 @@ export function AIChat() {
 
   return (
     <div 
-      className="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-[calc(100vw-2rem)] max-w-80 md:w-80 h-[70vh] md:h-[480px] rounded-2xl flex flex-col overflow-hidden shadow-2xl" 
+      className="aichat-window fixed bottom-4 right-4 md:bottom-8 md:right-8 w-[calc(100vw-2rem)] max-w-80 md:w-80 h-[70vh] md:h-[480px] rounded-2xl flex flex-col overflow-hidden shadow-2xl" 
       style={{ 
-        zIndex: 9999,
+        zIndex: 999999,
         background: 'rgba(15, 23, 42, 0.4)',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -166,7 +221,7 @@ export function AIChat() {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          zIndex: 1000,
+          zIndex: 1000000,
           width: '160px',
           height: '160px',
           display: 'flex',

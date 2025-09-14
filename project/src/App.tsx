@@ -7,6 +7,11 @@ import Footer from './components/Footer';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
+import NurseDashboardPage from './pages/NurseDashboardPage';
+import ChemistDashboardPage from './pages/ChemistDashboardPage';
+import InventoryDashboardPage from './pages/InventoryDashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import AmbulanceDashboardPage from './pages/AmbulanceDashboardPage';
 import NavBar from './components/NavBar';
 
 function HomePage() {
@@ -51,6 +56,11 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/nurse-dashboard" element={<NurseDashboardPage />} />
+        <Route path="/chemist-dashboard" element={<ChemistDashboardPage />} />
+        <Route path="/inventory-dashboard" element={<InventoryDashboardPage />} />
+        <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
+        <Route path="/ambulance-dashboard" element={<AmbulanceDashboardPage />} />
       </Routes>
     </Router>
   );

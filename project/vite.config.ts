@@ -9,5 +9,10 @@ export default defineConfig({
   },
   server: {
     host: true, // Allow hosting on the local network
+    allowedHosts: [
+      'localhost',
+      '127.0.0.1',
+      'square-leopard-communal.ngrok-free.app'
+    ]
   },
 });

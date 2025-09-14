@@ -40,25 +40,25 @@ export function ActivityCarousel() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-2">Recent Activities</h2>
-        <p className="text-neutral-500">Latest patient updates and system notifications</p>
+        <h2 className="text-lg md:text-xl font-semibold mb-1 md:mb-2">Recent Activities</h2>
+        <p className="text-neutral-500 text-sm md:text-base">Latest patient updates and system notifications</p>
       </div>
       
-      <div className="grid gap-4">
+      <div className="grid gap-3 md:gap-4">
         {activities.map((activity, index) => (
           <div 
             key={index} 
-            className="bg-white border rounded-xl p-4 hover:shadow-md transition-shadow"
+            className="bg-white border rounded-xl p-3 md:p-4 hover:shadow-md transition-shadow"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
               <div className="flex-1">
-                <h3 className="font-medium text-neutral-900">{activity.title}</h3>
-                <p className="text-sm text-neutral-600">{activity.patient}</p>
+                <h3 className="font-medium text-neutral-900 text-sm md:text-base">{activity.title}</h3>
+                <p className="text-xs md:text-sm text-neutral-600">{activity.patient}</p>
               </div>
-              <div className="flex items-center space-x-3">
-                <span className="text-sm text-neutral-500">{activity.time}</span>
+              <div className="flex items-center space-x-2 md:space-x-3">
+                <span className="text-xs md:text-sm text-neutral-500">{activity.time}</span>
                 <span className={`px-2 py-1 text-xs rounded-full border ${getPriorityColor(activity.priority)}`}>
                   {activity.priority}
                 </span>

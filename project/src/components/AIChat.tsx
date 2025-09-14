@@ -6,7 +6,6 @@ import { ScrollArea } from "./ui/scroll-area";
 import Orb from "./ui/Orb";
 import { speechToText } from "../utils/speechToText";
 
-
 interface Message {
   id: number;
   text: string;
@@ -26,10 +25,8 @@ export function AIChat() {
 
   // Initialize speech recognition on component mount
   useEffect(() => {
-    // Set language for medical context (can be changed based on user preference)
     speechToText.setLanguage('en-US');
     
-    // Cleanup timeout on unmount
     return () => {
       if (typingTimeout) {
         clearTimeout(typingTimeout);
@@ -47,16 +44,13 @@ export function AIChat() {
       timestamp: new Date()
     };
 
-    // Add user message immediately
     setMessages(prev => [...prev, userMessage]);
     const currentInput = inputValue;
     setInputValue("");
 
     try {
-      // Use LangGraph agent for all queries - it will internally decide how to handle them
       const agentType = 'langgraph';
 
-      // Call CareCloud AI Agent API endpoint
       const response = await fetch('http://localhost:8000/query', {
         method: 'POST',
         headers: {
@@ -64,7 +58,7 @@ export function AIChat() {
         },
         body: JSON.stringify({
           query: currentInput,
-          agent_type: agentType // Use toolbox for database queries, langchain for medical
+          agent_type: agentType
         }),
       });
 
@@ -86,7 +80,6 @@ export function AIChat() {
     } catch (error) {
       console.error('Error calling AI API:', error);
       
-      // Fallback error message
       const errorMessage: Message = {
         id: messages.length + 2,
         text: "I'm experiencing some technical difficulties. Please check your connection and try again.",
@@ -105,25 +98,21 @@ export function AIChat() {
     }
 
     if (isListening) {
-      // Stop listening
       speechToText.stop();
       setIsListening(false);
       setIsRecording(false);
       setCurrentTranscript("");
     } else {
-      // Start listening
       setIsRecording(true);
       setCurrentTranscript("");
       speechToText.start(
         (transcript: string) => {
-          // Handle final speech recognition result
           setInputValue(transcript);
           setCurrentTranscript("");
           setIsListening(false);
           setIsRecording(false);
         },
         (listening: boolean) => {
-          // Handle listening state changes
           setIsListening(listening);
           if (!listening) {
             setIsRecording(false);
@@ -131,7 +120,6 @@ export function AIChat() {
           }
         },
         (interimTranscript: string) => {
-          // Handle real-time transcript updates
           setCurrentTranscript(interimTranscript);
         }
       );
@@ -142,99 +130,126 @@ export function AIChat() {
     return (
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-8 right-8 h-12 w-12 rounded-full bg-neutral-900 hover:bg-neutral-800 transition-colors"
+        className="fixed bottom-4 right-4 md:bottom-8 md:right-8 h-12 w-12 md:h-14 md:w-14 rounded-full shadow-xl z-50"
         size="icon"
+        style={{
+          background: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}
       >
-        <MessageCircle className="h-5 w-5 text-white" />
+        <MessageCircle className="h-5 w-5 md:h-6 md:w-6 text-white" />
       </Button>
     );
   }
 
   return (
     <div 
-      className="fixed bottom-8 right-8 w-80 h-[480px] rounded-2xl flex flex-col overflow-hidden" 
+      className="fixed bottom-4 right-4 md:bottom-8 md:right-8 w-[calc(100vw-2rem)] max-w-80 md:w-80 h-[70vh] md:h-[480px] rounded-2xl flex flex-col overflow-hidden shadow-2xl" 
       style={{ 
         zIndex: 9999,
-        background: 'rgba(32, 33, 35, 0.85)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(86, 88, 105, 0.3)'
+        background: 'rgba(15, 23, 42, 0.4)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        border: '1px solid rgba(100, 116, 139, 0.3)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(100, 116, 139, 0.2)'
       }}
     >
-      {/* Header */}
+      {/* FIXED ORB - Absolutely positioned to chat window center */}
       <div 
-        className="flex items-center justify-between p-4 text-white rounded-t-2xl"
-        style={{ 
-          backgroundColor: 'rgba(22, 22, 22, 0.95)',
-          borderBottom: '1px solid rgba(86, 88, 105, 0.2)'
+        className={`absolute pointer-events-none transition-opacity duration-500 ${
+          isListening ? 'opacity-80' : 'opacity-20'
+        }`}
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 1000,
+          width: '160px',
+          height: '160px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}
       >
-        <span className="text-base font-medium">Medical AI</span>
+        <div 
+          className="w-52 h-52 md:w-64 md:h-64"
+          style={{
+            transform: `scale(${isListening ? 1 : 0.75})`,
+            transition: 'transform 500ms ease-in-out'
+          }}
+        >
+          <Orb
+            hoverIntensity={isListening ? 0.6 : (isTyping ? 0.4 : 0.2)}
+            rotateOnHover={true}
+            hue={isListening ? 250 : 310}
+            forceHoverState={isListening || isTyping}
+          />
+        </div>
+      </div>
+
+      {/* Header */}
+      <div 
+        className="flex items-center justify-between p-3 md:p-4 text-white rounded-t-2xl"
+        style={{ 
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          borderBottom: '1px solid rgba(100, 116, 139, 0.3)'
+        }}
+      >
+        <span className="text-sm md:text-base font-medium">Medical AI</span>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsOpen(false)}
-          className="text-gray-300 hover:text-white hover:bg-white/10 rounded-lg h-8 w-8 transition-colors"
+          className="text-gray-200 hover:text-white hover:bg-white/10 rounded-lg h-7 w-7 md:h-8 md:w-8 transition-colors"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3 w-3 md:h-4 md:w-4" />
         </Button>
       </div>
 
       {/* Messages area */}
       <ScrollArea 
-        className="flex-1 p-4 overflow-y-auto relative"
+        className="flex-1 p-3 md:p-4 overflow-y-auto"
         style={{
-          backdropFilter: 'blur(8px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(8px) saturate(180%)',
-          background: 'rgba(255, 255, 255, 0.46)'
+          background: 'rgba(15, 23, 42, 0.2)',
+          backdropFilter: 'blur(15px) saturate(150%)',
+          WebkitBackdropFilter: 'blur(15px) saturate(150%)'
         }}
       >
-        {/* Orb Background - Show larger and more prominent when listening */}
+        {/* Messages Content */}
         <div 
-          className={`absolute inset-0 pointer-events-none flex items-center justify-center transition-all duration-500 ${
-            isListening ? 'opacity-80 z-10' : 'opacity-15 z-0'
-          }`}
-        >
-          <div className={`transition-all duration-500 ${isListening ? 'w-48 h-48' : 'w-32 h-32'}`}>
-            <Orb
-              hoverIntensity={isListening ? 0.6 : (isTyping ? 0.4 : 0.2)}
-              rotateOnHover={true}
-              hue={isListening ? 250 : 310} // Red when listening, cyan when normal
-              forceHoverState={isListening || isTyping}
-            />
-          </div>
-        </div>
-        
-        {/* Messages Content - Hide when listening */}
-        <div 
-          className={`flex flex-col space-y-3 relative transition-all duration-300 ${
-            isListening ? 'opacity-0 invisible' : 'opacity-100 visible z-1'
+          className={`flex flex-col space-y-3 transition-all duration-300 ${
+            isListening ? 'opacity-0 invisible' : 'opacity-100 visible'
           }`}
         >
           {messages.map((message) => (
             <div
               key={message.id}
-              className={`p-3 rounded-lg backdrop-blur-sm transition-all duration-300 ${
+              className={`p-2 md:p-3 rounded-lg transition-all duration-300 ${
                 message.sender === 'user' 
-                  ? 'ml-4' // User messages slightly indented from left
-                  : 'mr-4' // AI messages slightly indented from right
+                  ? 'ml-2 md:ml-4' 
+                  : 'mr-2 md:mr-4'
               }`}
               style={{
-                background: message.sender === 'user' 
-                  ? 'rgba(255, 255, 255, 0.16)' 
-                  : 'rgba(255, 255, 255, 0.16)',
+                background: 'rgba(15, 23, 42, 0.6)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
                 border: message.sender === 'user'
-                  ? '1px solid rgba(73, 100, 254, 0.4)' 
-                  : '1px solid rgba(138, 43, 226, 0.4)', 
+                  ? '1px solid rgba(59, 130, 246, 0.5)' 
+                  : '1px solid rgba(147, 51, 234, 0.5)', 
                 boxShadow: message.sender === 'user'
-                  ? "0 0 12px 2px rgba(73, 100, 254, 0.25), 0 0 0 2px rgba(201, 100, 255, 0.10)"
-                  : "0 0 12px 2px rgba(138, 43, 226, 0.22), 0 0 0 2px rgba(73, 100, 254, 0.10)"
+                  ? "0 4px 15px rgba(59, 130, 246, 0.1)"
+                  : "0 4px 15px rgba(147, 51, 234, 0.1)"
               }}
             >
-              <p className="whitespace-pre-wrap text-white leading-relaxed text-sm">
+              <p className="whitespace-pre-wrap text-white leading-relaxed text-xs md:text-sm">
                 {message.text}
               </p>
-              <div className="text-xs text-gray-400 mt-2 opacity-60">
+              <div className="text-xs text-slate-300 mt-1 md:mt-2 opacity-80">
                 {message.sender === 'user' ? 'You' : 'Medical AI'} • {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
@@ -244,10 +259,10 @@ export function AIChat() {
         {/* Listening State Overlay */}
         {isListening && (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-            <div className="text-white text-xl font-medium mb-2 animate-pulse">
+            <div className="text-white text-lg md:text-xl font-medium mb-2 animate-pulse">
               Listening...
             </div>
-            <div style={{ color: '#f5f5f5' }} className="text-sm text-center px-4 mb-4">
+            <div className="text-white/90 text-xs md:text-sm text-center px-4 mb-4">
               Speak your medical question clearly
             </div>
           </div>
@@ -256,14 +271,15 @@ export function AIChat() {
 
       {/* Input area */}
       <div 
-        className="p-4 text-white rounded-b-2xl"
+        className="p-3 md:p-4 text-white rounded-b-2xl"
         style={{ 
-          backgroundColor: 'rgba(22, 22, 22, 0.95)',
-          borderTop: '1px solid rgba(86, 88, 105, 0.2)'
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          borderTop: '1px solid rgba(100, 116, 139, 0.3)'
         }}
       >
         <div className="flex items-center space-x-2">
-          {/* Input field with mic button inside */}
           <div className="flex-1 relative">
             <Input
               placeholder={isListening ? "Speak now..." : "Ask about medical topics..."}
@@ -272,15 +288,12 @@ export function AIChat() {
                 if (!isListening) {
                   setInputValue(e.target.value);
                   
-                  // Clear existing timeout
                   if (typingTimeout) {
                     clearTimeout(typingTimeout);
                   }
                   
-                  // Activate typing animation immediately when user starts typing
                   setIsTyping(true);
                   
-                  // Turn off typing animation after 2 seconds of no typing
                   const deactivateTimeout = setTimeout(() => {
                     setIsTyping(false);
                   }, 2000);
@@ -289,51 +302,52 @@ export function AIChat() {
                 }
               }}
               onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-              className="w-full text-white placeholder-gray-400 rounded-xl border-none focus:ring-0 focus:outline-none pr-10 overflow-hidden text-ellipsis"
+              className="w-full text-white placeholder-slate-400 rounded-xl border-none focus:ring-0 focus:outline-none pr-10 text-sm md:text-base"
               style={{ 
-                backgroundColor: 'rgba(64, 65, 79, 0.8)', 
+                background: 'rgba(15, 23, 42, 0.4)', 
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
                 color: '#ffffff',
-                border: '1px solid rgba(86, 88, 105, 0.3)',
-                whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis'
+                border: '1px solid rgba(100, 116, 139, 0.4)'
               }}
               readOnly={isListening}
             />
-            {/* Mic button inside input */}
             <Button
               onClick={handleMicClick}
               size="icon"
-              className={`absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 rounded-lg transition-all duration-300 ${
+              className={`absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 md:h-8 md:w-8 rounded-lg transition-all duration-300 ${
                 isListening || isRecording
-                  ? 'bg-red-500/30 hover:bg-red-500/40 text-red-300 shadow-lg' 
-                  : 'bg-white/10 hover:bg-white/20 text-gray-300'
+                  ? 'bg-red-500/40 hover:bg-red-500/50 text-red-200 shadow-lg' 
+                  : 'bg-white/10 hover:bg-white/20 text-gray-200'
               }`}
               style={{
                 boxShadow: isListening || isRecording 
-                  ? '0 0 20px rgba(239, 68, 68, 0.5), 0 0 40px rgba(239, 68, 68, 0.3), 0 0 60px rgba(239, 68, 68, 0.2)' 
+                  ? '0 0 20px rgba(239, 68, 68, 0.5)' 
                   : 'none',
                 animation: isListening ? 'pulse 2s infinite' : 'none'
               }}
             >
-              <Mic className={`h-4 w-4 transition-transform duration-200 ${isListening ? 'scale-110' : ''}`} />
+              <Mic className={`h-3 w-3 md:h-4 md:w-4 transition-transform duration-200 ${isListening ? 'scale-110' : ''}`} />
             </Button>
           </div>
           
-          {/* Send button - properly aligned */}
           <Button
             onClick={handleSendMessage}
             size="icon"
-            className="rounded-xl h-10 w-10 text-white transition-colors flex-shrink-0"
+            className="rounded-xl h-8 w-8 md:h-10 md:w-10 text-white transition-colors flex-shrink-0"
             style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
+              background: 'rgba(100, 116, 139, 0.4)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(100, 116, 139, 0.5)'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.25)'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(100, 116, 139, 0.6)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(100, 116, 139, 0.4)'}
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-3 w-3 md:h-4 md:w-4" />
           </Button>
         </div>
       </div>
     </div>
-  );
+    );
 }
